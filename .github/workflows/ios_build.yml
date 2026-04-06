@@ -1,0 +1,38 @@
+name: iOS Bulut İnsasi (Cloud Build)
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+jobs:
+  build-ios:
+    name: iPhone İcin Hazirla (Sideloading)
+    runs-on: macos-latest
+
+    steps:
+      - name: Kodlari Cek
+        uses: actions/checkout@v3
+
+      - name: Flutter Ortamini Hazirla
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      - name: Gerekli Paketleri Indir
+        run: flutter pub get
+
+      - name: iOS Uygulamasini Derle (Sertifikasiz)
+        run: flutter build ios --release --no-codesign
+
+      - name: Yan Yukleme (Sideload) IPAsi Olustur
+        run: |
+          mkdir Payload
+          cp -r build/ios/iphoneos/Runner.app Payload/
+          zip -r BenimArabam-iOS.ipa Payload
+
+      - name: Sonuclari Buluta Yukle
+        uses: actions/upload-artifact@v3
+        with:
+          name: BenimArabam-iPhone-Sideload-IPA
+          path: BenimArabam-iOS.ipa
