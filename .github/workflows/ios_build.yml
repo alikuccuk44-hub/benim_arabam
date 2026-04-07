@@ -12,7 +12,7 @@ jobs:
 
     steps:
       - name: Kodlari Cek
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Flutter Ortamini Hazirla
         uses: subosito/flutter-action@v2
@@ -32,7 +32,7 @@ jobs:
           zip -r BenimArabam-iOS.ipa Payload
 
       - name: Sonuclari Buluta Yukle
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: BenimArabam-iPhone-Sideload-IPA
           path: BenimArabam-iOS.ipa
