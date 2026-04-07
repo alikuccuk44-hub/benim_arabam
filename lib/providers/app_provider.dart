@@ -60,6 +60,14 @@ class AppProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> updateCar(Car car) async {
+    await _dbHelper.updateCar(car);
+    if (selectedCar != null && selectedCar!.id == car.id) {
+      selectedCar = car;
+    }
+    await loadData();
+  }
+
   Future<void> deleteCar(int id) async {
     await _dbHelper.deleteCar(id);
     if (selectedCar != null && selectedCar!.id == id) {

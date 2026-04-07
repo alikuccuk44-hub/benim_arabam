@@ -58,6 +58,27 @@ class _FuelFormState extends State<_FuelForm> {
   final _mileageController = TextEditingController();
   final _litersController = TextEditingController();
   final _literPriceController = TextEditingController();
+  final _dateController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _dateController.text = DateFormat('dd.MM.yyyy').format(DateTime.now());
+  }
+
+  Future<void> _selectDate(BuildContext context) async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2101),
+    );
+    if (picked != null) {
+      setState(() {
+        _dateController.text = DateFormat('dd.MM.yyyy').format(picked);
+      });
+    }
+  }
 
   void _save(AppProvider provider) {
     if (provider.selectedCar == null) return;
@@ -67,7 +88,7 @@ class _FuelFormState extends State<_FuelForm> {
 
     final fuel = Fuel(
       carId: provider.selectedCar!.id!,
-      date: DateFormat('dd.MM.yyyy').format(DateTime.now()),
+      date: _dateController.text,
       mileage: int.tryParse(_mileageController.text) ?? 0,
       liters: liters,
       literPrice: price,
@@ -84,6 +105,8 @@ class _FuelFormState extends State<_FuelForm> {
       padding: const EdgeInsets.all(16.0),
       child: ListView(
         children: [
+          TextField(controller: _dateController, readOnly: true, onTap: () => _selectDate(context), decoration: const InputDecoration(labelText: 'Tarih', suffixIcon: Icon(Icons.calendar_today))),
+          const SizedBox(height: 16),
           TextField(controller: _mileageController, decoration: const InputDecoration(labelText: 'Mevcut Kilometre'), keyboardType: TextInputType.number),
           const SizedBox(height: 16),
           TextField(controller: _litersController, decoration: const InputDecoration(labelText: 'Alınan Litre'), keyboardType: const TextInputType.numberWithOptions(decimal: true)),
@@ -112,6 +135,30 @@ class _MaintenanceFormState extends State<_MaintenanceForm> {
   final _categoryController = TextEditingController();
   final _mileageController = TextEditingController();
   final _nextDateController = TextEditingController();
+  final _jobsDoneController = TextEditingController();
+  final _upcomingJobsController = TextEditingController();
+  final _dateController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _dateController.text = DateFormat('dd.MM.yyyy').format(DateTime.now());
+    _nextDateController.text = DateFormat('dd.MM.yyyy').format(DateTime.now().add(const Duration(days: 365)));
+  }
+
+  Future<void> _selectDate(BuildContext context, TextEditingController controller) async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2101),
+    );
+    if (picked != null) {
+      setState(() {
+        controller.text = DateFormat('dd.MM.yyyy').format(picked);
+      });
+    }
+  }
 
   void _save(AppProvider provider) {
     if (provider.selectedCar == null) return;
@@ -119,10 +166,12 @@ class _MaintenanceFormState extends State<_MaintenanceForm> {
     final maint = Maintenance(
       carId: provider.selectedCar!.id!,
       category: _categoryController.text.isEmpty ? 'Genel Bakım' : _categoryController.text,
-      date: DateFormat('dd.MM.yyyy').format(DateTime.now()),
+      date: _dateController.text,
       mileage: int.tryParse(_mileageController.text) ?? 0,
-      nextDate: _nextDateController.text.isEmpty ? DateFormat('dd.MM.yyyy').format(DateTime.now().add(const Duration(days: 365))) : _nextDateController.text,
+      nextDate: _nextDateController.text,
       nextMileage: (int.tryParse(_mileageController.text) ?? 0) + 10000,
+      jobsDone: _jobsDoneController.text,
+      upcomingJobs: _upcomingJobsController.text,
     );
     provider.addMaintenance(maint);
     Navigator.pop(context);
@@ -135,11 +184,17 @@ class _MaintenanceFormState extends State<_MaintenanceForm> {
       padding: const EdgeInsets.all(16.0),
       child: ListView(
         children: [
+          TextField(controller: _dateController, readOnly: true, onTap: () => _selectDate(context, _dateController), decoration: const InputDecoration(labelText: 'Bakım Tarihi', suffixIcon: Icon(Icons.calendar_today))),
+          const SizedBox(height: 16),
           TextField(controller: _categoryController, decoration: const InputDecoration(labelText: 'Bakım Türü (Örn: Periyodik, Fren)')),
           const SizedBox(height: 16),
           TextField(controller: _mileageController, decoration: const InputDecoration(labelText: 'Mevcut Kilometre'), keyboardType: TextInputType.number),
           const SizedBox(height: 16),
-          TextField(controller: _nextDateController, decoration: const InputDecoration(labelText: 'Sonraki Bakım Tarihi (Örn: 20.08.2024)')),
+          TextField(controller: _jobsDoneController, decoration: const InputDecoration(labelText: 'Yapılan İşlemler (İsteğe Bağlı)'), maxLines: 2),
+          const SizedBox(height: 16),
+          TextField(controller: _nextDateController, readOnly: true, onTap: () => _selectDate(context, _nextDateController), decoration: const InputDecoration(labelText: 'Sonraki Bakım Tarihi', suffixIcon: Icon(Icons.calendar_today))),
+          const SizedBox(height: 16),
+          TextField(controller: _upcomingJobsController, decoration: const InputDecoration(labelText: 'Gelecek Bakımda Yapılacaklar (İsteğe Bağlı)'), maxLines: 2),
           const SizedBox(height: 32),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF38BDF8), padding: const EdgeInsets.symmetric(vertical: 16)),
@@ -164,6 +219,26 @@ class _ExpenseFormState extends State<_ExpenseForm> {
   final _amountController = TextEditingController();
   final _dueDateController = TextEditingController();
 
+  @override
+  void initState() {
+    super.initState();
+    _dueDateController.text = DateFormat('dd.MM.yyyy').format(DateTime.now());
+  }
+
+  Future<void> _selectDate(BuildContext context) async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2101),
+    );
+    if (picked != null) {
+      setState(() {
+        _dueDateController.text = DateFormat('dd.MM.yyyy').format(picked);
+      });
+    }
+  }
+
   void _save(AppProvider provider) {
     if (provider.selectedCar == null) return;
 
@@ -171,7 +246,7 @@ class _ExpenseFormState extends State<_ExpenseForm> {
       carId: provider.selectedCar!.id!,
       category: _categoryController.text.isEmpty ? 'Genel Gider' : _categoryController.text,
       amount: double.tryParse(_amountController.text.replaceAll(',', '.')) ?? 0,
-      dueDate: _dueDateController.text.isEmpty ? DateFormat('dd.MM.yyyy').format(DateTime.now()) : _dueDateController.text,
+      dueDate: _dueDateController.text,
       isPaid: 1, // Default to paid
     );
     provider.addExpense(expense);
@@ -189,7 +264,7 @@ class _ExpenseFormState extends State<_ExpenseForm> {
           const SizedBox(height: 16),
           TextField(controller: _amountController, decoration: const InputDecoration(labelText: 'Tutar (₺)'), keyboardType: const TextInputType.numberWithOptions(decimal: true)),
           const SizedBox(height: 16),
-          TextField(controller: _dueDateController, decoration: const InputDecoration(labelText: 'Tarih / Son Ödeme Günü (Örn: 15.01.2024)')),
+          TextField(controller: _dueDateController, readOnly: true, onTap: () => _selectDate(context), decoration: const InputDecoration(labelText: 'Tarih / Son Ödeme Günü', suffixIcon: Icon(Icons.calendar_today))),
           const SizedBox(height: 32),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF38BDF8), padding: const EdgeInsets.symmetric(vertical: 16)),

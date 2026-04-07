@@ -20,7 +20,11 @@ class TimelineScreen extends StatelessWidget {
           items.add(_TimelineItem(date: f.date, title: 'Yakıt Alımı', subtitle: '${f.liters}L', amount: f.totalCost, icon: Icons.local_gas_station, color: Colors.green));
         }
         for (var m in provider.maintenances) {
-          items.add(_TimelineItem(date: m.date, title: m.category, subtitle: '${m.mileage} km', amount: 0, icon: Icons.build, color: Colors.orange));
+          String sub = '${m.mileage} km';
+          if (m.jobsDone != null && m.jobsDone!.isNotEmpty) {
+            sub += ' - ${m.jobsDone}';
+          }
+          items.add(_TimelineItem(date: m.date, title: m.category, subtitle: sub, amount: 0, icon: Icons.build, color: Colors.orange));
         }
         for (var e in provider.expenses) {
           items.add(_TimelineItem(date: e.dueDate, title: e.category, subtitle: e.isPaid == 1 ? 'Ödendi' : 'Ödenecek', amount: e.amount, icon: Icons.account_balance_wallet, color: Colors.redAccent));

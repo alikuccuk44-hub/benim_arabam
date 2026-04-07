@@ -15,45 +15,116 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   final ImagePicker _picker = ImagePicker();
 
+  static const Map<String, List<String>> _carData = {
+    'Fiat': ['Egea', 'Fiorino', 'Linea', 'Doblo', 'Punto'],
+    'Renault': ['Clio', 'Megane', 'Symbol', 'Fluence', 'Captur'],
+    'Volkswagen': ['Polo', 'Golf', 'Passat', 'Tiguan', 'Jetta'],
+    'Ford': ['Focus', 'Fiesta', 'Courier', 'Transit', 'Mondeo'],
+    'Toyota': ['Corolla', 'Yaris', 'Auris', 'C-HR', 'Hilux'],
+    'Hyundai': ['i20', 'Tucson', 'Accent Blue', 'Elantra', 'i10'],
+    'Honda': ['Civic', 'CR-V', 'City', 'Accord', 'Jazz'],
+    'Peugeot': ['3008', '208', '508', '2008', '308'],
+    'Dacia': ['Duster', 'Sandero', 'Logan', 'Lodgy'],
+    'Opel': ['Astra', 'Corsa', 'Insignia', 'Crossland', 'Mokka'],
+  };
+
   void _showAddCarDialog() {
-    final brandController = TextEditingController();
-    final modelController = TextEditingController();
-    final plateController = TextEditingController();
     final yearController = TextEditingController();
     final mileageController = TextEditingController();
+    final plateController = TextEditingController();
+    
+    String selectedBrand = '';
+    String selectedModel = '';
 
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Yeni Araç Ekle'),
-        content: SingleChildScrollView(
-          child: Column(
-            children: [
-              TextField(controller: brandController, decoration: const InputDecoration(labelText: 'Marka')),
-              TextField(controller: modelController, decoration: const InputDecoration(labelText: 'Model')),
-              TextField(controller: plateController, decoration: const InputDecoration(labelText: 'Plaka')),
-              TextField(controller: yearController, decoration: const InputDecoration(labelText: 'Yıl'), keyboardType: TextInputType.number),
-              TextField(controller: mileageController, decoration: const InputDecoration(labelText: 'Kilometre'), keyboardType: TextInputType.number),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setState) {
+          List<String> availableModels = selectedBrand.isNotEmpty && _carData.containsKey(selectedBrand) 
+              ? _carData[selectedBrand]! 
+              : [];
+
+          return AlertDialog(
+            title: const Text('Yeni Araç Ekle'),
+            content: SingleChildScrollView(
+              child: Column(
+                children: [
+                  Autocomplete<String>(
+                    optionsBuilder: (TextEditingValue textEditingValue) {
+                      if (textEditingValue.text == '') {
+                        return _carData.keys.toList();
+                      }
+                      return _carData.keys.where((String option) {
+                        return option.toLowerCase().contains(textEditingValue.text.toLowerCase());
+                      });
+                    },
+                    onSelected: (String selection) {
+                      setState(() {
+                        selectedBrand = selection;
+                        selectedModel = '';
+                      });
+                    },
+                    fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
+                      controller.addListener(() {
+                        selectedBrand = controller.text;
+                      });
+                      return TextField(
+                        controller: controller,
+                        focusNode: focusNode,
+                        decoration: const InputDecoration(labelText: 'Marka (Örn: Fiat)'),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  Autocomplete<String>(
+                    optionsBuilder: (TextEditingValue textEditingValue) {
+                      if (textEditingValue.text == '') {
+                        return availableModels;
+                      }
+                      return availableModels.where((String option) {
+                        return option.toLowerCase().contains(textEditingValue.text.toLowerCase());
+                      });
+                    },
+                    onSelected: (String selection) {
+                      selectedModel = selection;
+                    },
+                    fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
+                      controller.addListener(() {
+                        selectedModel = controller.text;
+                      });
+                      return TextField(
+                        controller: controller,
+                        focusNode: focusNode,
+                        decoration: const InputDecoration(labelText: 'Model (Örn: Egea)'),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(controller: plateController, decoration: const InputDecoration(labelText: 'Plaka')),
+                  TextField(controller: yearController, decoration: const InputDecoration(labelText: 'Yıl'), keyboardType: TextInputType.number),
+                  TextField(controller: mileageController, decoration: const InputDecoration(labelText: 'Kilometre'), keyboardType: TextInputType.number),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('İptal')),
+              ElevatedButton(
+                onPressed: () {
+                  final newCar = Car(
+                    brand: selectedBrand.isEmpty ? 'Bilinmiyor' : selectedBrand,
+                    model: selectedModel.isEmpty ? 'Bilinmiyor' : selectedModel,
+                    plate: plateController.text,
+                    year: int.tryParse(yearController.text) ?? 2000,
+                    mileage: int.tryParse(mileageController.text) ?? 0,
+                  );
+                  Provider.of<AppProvider>(context, listen: false).addCar(newCar);
+                  Navigator.pop(ctx);
+                },
+                child: const Text('Kaydet'),
+              ),
             ],
-          ),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('İptal')),
-          ElevatedButton(
-            onPressed: () {
-              final newCar = Car(
-                brand: brandController.text,
-                model: modelController.text,
-                plate: plateController.text,
-                year: int.tryParse(yearController.text) ?? 2000,
-                mileage: int.tryParse(mileageController.text) ?? 0,
-              );
-              Provider.of<AppProvider>(context, listen: false).addCar(newCar);
-              Navigator.pop(ctx);
-            },
-            child: const Text('Kaydet'),
-          ),
-        ],
+          );
+        }
       ),
     );
   }
@@ -72,9 +143,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         mileage: provider.selectedCar!.mileage,
         photoPath: image.path,
       );
-      // NOTE: Here we should just update DB via a helper.
-      // For now, we update it via AppProvider.
-      // We will need an updateCar method in AppProvider.
+      provider.updateCar(updatedCar);
     }
   }
 
@@ -202,6 +271,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           _buildSummaryCard('Yaklaşan Bakım', '${provider.maintenances.length} Adet', Icons.build, Colors.orange),
                         ],
                       ),
+                      const SizedBox(height: 16),
+                      // Yaklaşan Bakımlar Listesi
+                      if (provider.maintenances.isNotEmpty) ...[
+                        const Text('Yaklaşan Bakımlar:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white)),
+                        const SizedBox(height: 8),
+                        ...provider.maintenances.map((m) {
+                          return Card(
+                            color: const Color(0xFF1E293B),
+                            margin: const EdgeInsets.only(bottom: 8),
+                            child: ListTile(
+                              leading: const Icon(Icons.build, color: Colors.orange),
+                              title: Text(m.category, style: const TextStyle(fontWeight: FontWeight.bold)),
+                              subtitle: Text('Tahmini Tarih: ${m.nextDate} • ${m.nextMileage} km'),
+                            ),
+                          );
+                        }),
+                      ],
+                      const SizedBox(height: 16),
                     ],
                   ),
                 ),

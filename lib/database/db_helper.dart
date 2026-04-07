@@ -19,7 +19,7 @@ class DatabaseHelper {
     String path = join(await getDatabasesPath(), 'benim_arabam.db');
     return await openDatabase(
       path,
-      version: 2,
+      version: 3,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -60,6 +60,8 @@ class DatabaseHelper {
         mileage INTEGER,
         nextDate TEXT,
         nextMileage INTEGER,
+        jobsDone TEXT,
+        upcomingJobs TEXT,
         FOREIGN KEY (carId) REFERENCES cars (id) ON DELETE CASCADE
       )
     ''');
@@ -106,6 +108,11 @@ class DatabaseHelper {
           photoPath TEXT
         )
       ''');
+    }
+    if (oldVersion < 3) {
+      // Version 3'te maintenance tablosuna iki yeni kolon ekledik.
+      await db.execute('ALTER TABLE maintenance ADD COLUMN jobsDone TEXT');
+      await db.execute('ALTER TABLE maintenance ADD COLUMN upcomingJobs TEXT');
     }
   }
 

@@ -103,6 +103,8 @@ class Maintenance {
   final int mileage;
   final String nextDate;
   final int nextMileage;
+  final String? jobsDone;
+  final String? upcomingJobs;
 
   Maintenance({
     this.id,
@@ -112,6 +114,8 @@ class Maintenance {
     required this.mileage,
     required this.nextDate,
     required this.nextMileage,
+    this.jobsDone,
+    this.upcomingJobs,
   });
 
   Map<String, dynamic> toMap() {
@@ -123,6 +127,8 @@ class Maintenance {
       'mileage': mileage,
       'nextDate': nextDate,
       'nextMileage': nextMileage,
+      'jobsDone': jobsDone,
+      'upcomingJobs': upcomingJobs,
     };
   }
 
@@ -135,6 +141,8 @@ class Maintenance {
       mileage: map['mileage'],
       nextDate: map['nextDate'],
       nextMileage: map['nextMileage'],
+      jobsDone: map['jobsDone'],
+      upcomingJobs: map['upcomingJobs'],
     );
   }
 }
