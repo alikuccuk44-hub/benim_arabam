@@ -22,6 +22,13 @@ jobs:
       - name: Gerekli Paketleri Indir
         run: flutter pub get
 
+      - name: Podfile iOS Hedefini Guncelle (iOS 14.0)
+        run: |
+          cd ios
+          flutter build ios --config-only || true
+          sed -i '' "s/^# platform :ios.*/platform :ios, '14.0'/g" Podfile
+          cd ..
+
       - name: iOS Uygulamasini Derle (Sertifikasiz)
         run: flutter build ios --release --no-codesign
 
