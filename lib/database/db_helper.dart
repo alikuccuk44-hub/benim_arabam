@@ -19,7 +19,7 @@ class DatabaseHelper {
     String path = join(await getDatabasesPath(), 'benim_arabam.db');
     return await openDatabase(
       path,
-      version: 3,
+      version: 4,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -96,6 +96,33 @@ class DatabaseHelper {
         photoPath TEXT
       )
     ''');
+
+    await db.execute('''
+      CREATE TABLE insurance(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        carId INTEGER,
+        type TEXT,
+        company TEXT,
+        policyNo TEXT,
+        startDate TEXT,
+        endDate TEXT,
+        premium REAL,
+        notes TEXT,
+        FOREIGN KEY (carId) REFERENCES cars (id) ON DELETE CASCADE
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE inspection(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        carId INTEGER,
+        inspectionDate TEXT,
+        expiryDate TEXT,
+        station TEXT,
+        cost REAL,
+        FOREIGN KEY (carId) REFERENCES cars (id) ON DELETE CASCADE
+      )
+    ''');
   }
 
   void _onUpgrade(Database db, int oldVersion, int newVersion) async {
@@ -110,9 +137,35 @@ class DatabaseHelper {
       ''');
     }
     if (oldVersion < 3) {
-      // Version 3'te maintenance tablosuna iki yeni kolon ekledik.
       await db.execute('ALTER TABLE maintenance ADD COLUMN jobsDone TEXT');
       await db.execute('ALTER TABLE maintenance ADD COLUMN upcomingJobs TEXT');
+    }
+    if (oldVersion < 4) {
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS insurance(
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          carId INTEGER,
+          type TEXT,
+          company TEXT,
+          policyNo TEXT,
+          startDate TEXT,
+          endDate TEXT,
+          premium REAL,
+          notes TEXT,
+          FOREIGN KEY (carId) REFERENCES cars (id) ON DELETE CASCADE
+        )
+      ''');
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS inspection(
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          carId INTEGER,
+          inspectionDate TEXT,
+          expiryDate TEXT,
+          station TEXT,
+          cost REAL,
+          FOREIGN KEY (carId) REFERENCES cars (id) ON DELETE CASCADE
+        )
+      ''');
     }
   }
 
@@ -191,6 +244,11 @@ class DatabaseHelper {
     return List.generate(maps.length, (i) => Document.fromMap(maps[i]));
   }
 
+  Future<int> deleteDocument(int id) async {
+    Database db = await database;
+    return await db.delete('documents', where: 'id = ?', whereArgs: [id]);
+  }
+
   // DRIVER CRUD
   Future<int> insertDriver(Driver driver) async {
     Database db = await database;
@@ -206,5 +264,55 @@ class DatabaseHelper {
   Future<int> deleteDriver(int id) async {
     Database db = await database;
     return await db.delete('drivers', where: 'id = ?', whereArgs: [id]);
+  }
+
+  // INSURANCE CRUD
+  Future<int> insertInsurance(Insurance ins) async {
+    Database db = await database;
+    return await db.insert('insurance', ins.toMap());
+  }
+
+  Future<List<Insurance>> getInsuranceForCar(int carId) async {
+    Database db = await database;
+    List<Map<String, dynamic>> maps = await db.query('insurance', where: 'carId = ?', whereArgs: [carId], orderBy: 'id DESC');
+    return List.generate(maps.length, (i) => Insurance.fromMap(maps[i]));
+  }
+
+  Future<int> deleteInsurance(int id) async {
+    Database db = await database;
+    return await db.delete('insurance', where: 'id = ?', whereArgs: [id]);
+  }
+
+  // INSPECTION CRUD
+  Future<int> insertInspection(Inspection ins) async {
+    Database db = await database;
+    return await db.insert('inspection', ins.toMap());
+  }
+
+  Future<List<Inspection>> getInspectionsForCar(int carId) async {
+    Database db = await database;
+    List<Map<String, dynamic>> maps = await db.query('inspection', where: 'carId = ?', whereArgs: [carId], orderBy: 'id DESC');
+    return List.generate(maps.length, (i) => Inspection.fromMap(maps[i]));
+  }
+
+  Future<int> deleteInspection(int id) async {
+    Database db = await database;
+    return await db.delete('inspection', where: 'id = ?', whereArgs: [id]);
+  }
+
+  // All data for export
+  Future<List<Map<String, dynamic>>> getAllFuels() async {
+    Database db = await database;
+    return await db.query('fuels');
+  }
+
+  Future<List<Map<String, dynamic>>> getAllMaintenances() async {
+    Database db = await database;
+    return await db.query('maintenance');
+  }
+
+  Future<List<Map<String, dynamic>>> getAllExpenses() async {
+    Database db = await database;
+    return await db.query('expenses');
   }
 }

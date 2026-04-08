@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import '../providers/app_provider.dart';
 import '../models/models.dart';
+import '../database/car_data.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -14,19 +15,6 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   final ImagePicker _picker = ImagePicker();
-
-  static const Map<String, List<String>> _carData = {
-    'Fiat': ['Egea', 'Fiorino', 'Linea', 'Doblo', 'Punto'],
-    'Renault': ['Clio', 'Megane', 'Symbol', 'Fluence', 'Captur'],
-    'Volkswagen': ['Polo', 'Golf', 'Passat', 'Tiguan', 'Jetta'],
-    'Ford': ['Focus', 'Fiesta', 'Courier', 'Transit', 'Mondeo'],
-    'Toyota': ['Corolla', 'Yaris', 'Auris', 'C-HR', 'Hilux'],
-    'Hyundai': ['i20', 'Tucson', 'Accent Blue', 'Elantra', 'i10'],
-    'Honda': ['Civic', 'CR-V', 'City', 'Accord', 'Jazz'],
-    'Peugeot': ['3008', '208', '508', '2008', '308'],
-    'Dacia': ['Duster', 'Sandero', 'Logan', 'Lodgy'],
-    'Opel': ['Astra', 'Corsa', 'Insignia', 'Crossland', 'Mokka'],
-  };
 
   void _showAddCarDialog() {
     final yearController = TextEditingController();
@@ -40,8 +28,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setState) {
-          List<String> availableModels = selectedBrand.isNotEmpty && _carData.containsKey(selectedBrand) 
-              ? _carData[selectedBrand]! 
+          List<String> availableModels = selectedBrand.isNotEmpty && CarData.brands.containsKey(selectedBrand) 
+              ? CarData.brands[selectedBrand]! 
               : [];
 
           return AlertDialog(
@@ -52,9 +40,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   Autocomplete<String>(
                     optionsBuilder: (TextEditingValue textEditingValue) {
                       if (textEditingValue.text == '') {
-                        return _carData.keys.toList();
+                        return CarData.brands.keys.toList();
                       }
-                      return _carData.keys.where((String option) {
+                      return CarData.brands.keys.where((String option) {
                         return option.toLowerCase().contains(textEditingValue.text.toLowerCase());
                       });
                     },
@@ -65,8 +53,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       });
                     },
                     fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
+                      if (controller.text != selectedBrand && selectedBrand.isEmpty) {
+                         // Initial set if needed
+                      }
                       controller.addListener(() {
-                        selectedBrand = controller.text;
+                        if (selectedBrand != controller.text) {
+                          setState(() {
+                            selectedBrand = controller.text;
+                          });
+                        }
                       });
                       return TextField(
                         controller: controller,
@@ -86,11 +81,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       });
                     },
                     onSelected: (String selection) {
-                      selectedModel = selection;
+                      setState(() {
+                        selectedModel = selection;
+                      });
                     },
                     fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
                       controller.addListener(() {
-                        selectedModel = controller.text;
+                        if (selectedModel != controller.text) {
+                          setState(() {
+                            selectedModel = controller.text;
+                          });
+                        }
                       });
                       return TextField(
                         controller: controller,
@@ -243,24 +244,69 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                       const SizedBox(height: 16),
                                             // Odometer (Kilometre Sayacı)
-                      Container(
-                        padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
-                        margin: const EdgeInsets.only(bottom: 16),
-                        decoration: BoxDecoration(
-                          color: Colors.black87,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: const Color(0xFF38BDF8), width: 2),
-                          boxShadow: [BoxShadow(color: const Color(0xFF38BDF8).withAlpha(50), blurRadius: 10, spreadRadius: 2)]
-                        ),
-                        child: Column(
-                          children: [
-                            const Text('TOTAL KİLOMETRE', style: TextStyle(color: Colors.grey, fontSize: 12, letterSpacing: 2)),
-                            const SizedBox(height: 8),
-                            Text(
-                              '${provider.selectedCar!.mileage.toString().replaceAll(RegExp(r"\\B(?=(\\d{3})+(?!\\d))"), ".")} KM',
-                              style: const TextStyle(fontFamily: 'monospace', fontSize: 36, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: 4),
+                      GestureDetector(
+                        onTap: () {
+                          // Show km history
+                          final sorted = List.from(provider.fuels)..sort((a, b) => a.mileage.compareTo(b.mileage));
+                          final avgKm = provider.avgMonthlyKm;
+                          showModalBottomSheet(
+                            context: context,
+                            builder: (_) => Container(
+                              padding: const EdgeInsets.all(20),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text('Kilometre Geçmişi', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
+                                  if (avgKm > 0) Padding(
+                                    padding: const EdgeInsets.symmetric(vertical: 8),
+                                    child: Text('Ort. Aylık: ${avgKm.toStringAsFixed(0)} km/ay', style: const TextStyle(color: Color(0xFF38BDF8))),
+                                  ),
+                                  const Divider(),
+                                  Expanded(
+                                    child: sorted.isEmpty
+                                        ? const Center(child: Text('Henüz km verisi yok.'))
+                                        : ListView.builder(
+                                            itemCount: sorted.length,
+                                            itemBuilder: (_, i) {
+                                              final f = sorted[i];
+                                              return ListTile(
+                                                leading: const Icon(Icons.local_gas_station, color: Color(0xFF38BDF8)),
+                                                title: Text('${f.mileage} km'),
+                                                subtitle: Text(f.date),
+                                                trailing: Text('${f.liters} L', style: const TextStyle(color: Colors.grey)),
+                                              );
+                                            },
+                                          ),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ],
+                          );
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+                          margin: const EdgeInsets.only(bottom: 16),
+                          decoration: BoxDecoration(
+                            color: Colors.black87,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: const Color(0xFF38BDF8), width: 2),
+                            boxShadow: [BoxShadow(color: const Color(0xFF38BDF8).withAlpha(50), blurRadius: 10, spreadRadius: 2)]
+                          ),
+                          child: Column(
+                            children: [
+                              const Text('TOTAL KİLOMETRE', style: TextStyle(color: Colors.grey, fontSize: 12, letterSpacing: 2)),
+                              const SizedBox(height: 8),
+                              Text(
+                                '${provider.selectedCar!.mileage.toString().replaceAll(RegExp(r"\B(?=(\d{3})+(?!\d))"), ".")} KM',
+                                style: const TextStyle(fontFamily: 'monospace', fontSize: 36, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: 4),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                provider.avgMonthlyKm > 0 ? 'Ort. ${provider.avgMonthlyKm.toStringAsFixed(0)} km/ay · Geçmiş için dokun' : 'Geçmiş için dokun',
+                                style: const TextStyle(color: Colors.grey, fontSize: 11),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                       // Özet Kartlar

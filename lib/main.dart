@@ -19,7 +19,12 @@ void main() async {
   }
   await NotificationService().init();
   await initializeDateFormatting('tr_TR', null);
-  runApp(const MyApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => AppProvider()..loadData(),
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -27,32 +32,50 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => AppProvider()..loadData()),
-      ],
-      child: MaterialApp(
-        title: 'Benim Arabam',
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData.dark().copyWith(
-          scaffoldBackgroundColor: const Color(0xFF0F172A),
-          bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-            backgroundColor: Color(0xFF1E293B),
-            selectedItemColor: Color(0xFF38BDF8),
-            unselectedItemColor: Colors.grey,
+    return Consumer<AppProvider>(
+      builder: (context, provider, child) {
+        return MaterialApp(
+          title: 'Benim Arabam',
+          debugShowCheckedModeBanner: false,
+          themeMode: provider.themeMode,
+          theme: ThemeData.light().copyWith(
+            scaffoldBackgroundColor: const Color(0xFFF1F5F9),
+            bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+              backgroundColor: Colors.white,
+              selectedItemColor: Color(0xFF0284C7),
+              unselectedItemColor: Colors.grey,
+            ),
+            appBarTheme: const AppBarTheme(
+              backgroundColor: Colors.white,
+              elevation: 0,
+              centerTitle: true,
+              foregroundColor: Colors.black87,
+            ),
+            colorScheme: const ColorScheme.light(
+              primary: Color(0xFF0284C7),
+              secondary: Color(0xFF818CF8),
+            ),
           ),
-          appBarTheme: const AppBarTheme(
-            backgroundColor: Color(0xFF1E293B),
-            elevation: 0,
-            centerTitle: true,
+          darkTheme: ThemeData.dark().copyWith(
+            scaffoldBackgroundColor: const Color(0xFF0F172A),
+            bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+              backgroundColor: Color(0xFF1E293B),
+              selectedItemColor: Color(0xFF38BDF8),
+              unselectedItemColor: Colors.grey,
+            ),
+            appBarTheme: const AppBarTheme(
+              backgroundColor: Color(0xFF1E293B),
+              elevation: 0,
+              centerTitle: true,
+            ),
+            colorScheme: const ColorScheme.dark(
+              primary: Color(0xFF38BDF8),
+              secondary: Color(0xFF818CF8),
+            ),
           ),
-          colorScheme: const ColorScheme.dark(
-            primary: Color(0xFF38BDF8),
-            secondary: Color(0xFF818CF8),
-          ),
-        ),
-        home: const MainScreen(),
-      ),
+          home: const MainScreen(),
+        );
+      },
     );
   }
 }

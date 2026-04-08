@@ -231,3 +231,107 @@ class Driver {
 
   factory Driver.fromMap(Map<String, dynamic> m) => Driver(id: m["id"], name: m["name"], phone: m["phone"], photoPath: m["photoPath"]);
 }
+
+class Insurance {
+  final int? id;
+  final int carId;
+  final String type; // Trafik, Kasko
+  final String company;
+  final String policyNo;
+  final String startDate;
+  final String endDate;
+  final double premium;
+  final String? notes;
+
+  Insurance({
+    this.id,
+    required this.carId,
+    required this.type,
+    required this.company,
+    required this.policyNo,
+    required this.startDate,
+    required this.endDate,
+    required this.premium,
+    this.notes,
+  });
+
+  Map<String, dynamic> toMap() => {
+    'id': id,
+    'carId': carId,
+    'type': type,
+    'company': company,
+    'policyNo': policyNo,
+    'startDate': startDate,
+    'endDate': endDate,
+    'premium': premium,
+    'notes': notes,
+  };
+
+  factory Insurance.fromMap(Map<String, dynamic> m) => Insurance(
+    id: m['id'],
+    carId: m['carId'],
+    type: m['type'],
+    company: m['company'],
+    policyNo: m['policyNo'],
+    startDate: m['startDate'],
+    endDate: m['endDate'],
+    premium: m['premium'],
+    notes: m['notes'],
+  );
+
+  int daysRemaining() {
+    try {
+      final parts = endDate.split('.');
+      final end = DateTime(int.parse(parts[2]), int.parse(parts[1]), int.parse(parts[0]));
+      return end.difference(DateTime.now()).inDays;
+    } catch (_) {
+      return 0;
+    }
+  }
+}
+
+class Inspection {
+  final int? id;
+  final int carId;
+  final String inspectionDate;
+  final String expiryDate;
+  final String? station;
+  final double? cost;
+
+  Inspection({
+    this.id,
+    required this.carId,
+    required this.inspectionDate,
+    required this.expiryDate,
+    this.station,
+    this.cost,
+  });
+
+  Map<String, dynamic> toMap() => {
+    'id': id,
+    'carId': carId,
+    'inspectionDate': inspectionDate,
+    'expiryDate': expiryDate,
+    'station': station,
+    'cost': cost,
+  };
+
+  factory Inspection.fromMap(Map<String, dynamic> m) => Inspection(
+    id: m['id'],
+    carId: m['carId'],
+    inspectionDate: m['inspectionDate'],
+    expiryDate: m['expiryDate'],
+    station: m['station'],
+    cost: m['cost'],
+  );
+
+  int daysRemaining() {
+    try {
+      final parts = expiryDate.split('.');
+      final end = DateTime(int.parse(parts[2]), int.parse(parts[1]), int.parse(parts[0]));
+      return end.difference(DateTime.now()).inDays;
+    } catch (_) {
+      return 0;
+    }
+  }
+}
