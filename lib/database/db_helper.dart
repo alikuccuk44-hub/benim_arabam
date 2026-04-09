@@ -19,7 +19,7 @@ class DatabaseHelper {
     String path = join(await getDatabasesPath(), 'benim_arabam.db');
     return await openDatabase(
       path,
-      version: 4,
+      version: 5,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -34,7 +34,8 @@ class DatabaseHelper {
         plate TEXT,
         year INTEGER,
         mileage INTEGER,
-        photoPath TEXT
+        photoPath TEXT,
+        photoBytes BLOB
       )
     ''');
 
@@ -166,6 +167,8 @@ class DatabaseHelper {
           FOREIGN KEY (carId) REFERENCES cars (id) ON DELETE CASCADE
         )
       ''');
+    if (oldVersion < 5) {
+      await db.execute('ALTER TABLE cars ADD COLUMN photoBytes BLOB');
     }
   }
 

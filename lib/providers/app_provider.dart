@@ -103,7 +103,16 @@ class AppProvider with ChangeNotifier {
   Future<void> addFuel(Fuel fuel) async {
     await _dbHelper.insertFuel(fuel);
     if (selectedCar != null && fuel.mileage > selectedCar!.mileage) {
-       selectedCar = Car(id: selectedCar!.id, brand: selectedCar!.brand, model: selectedCar!.model, plate: selectedCar!.plate, year: selectedCar!.year, mileage: fuel.mileage, photoPath: selectedCar!.photoPath);
+       selectedCar = Car(
+         id: selectedCar!.id,
+         brand: selectedCar!.brand,
+         model: selectedCar!.model,
+         plate: selectedCar!.plate,
+         year: selectedCar!.year,
+         mileage: fuel.mileage,
+         photoPath: selectedCar!.photoPath,
+         photoBytes: selectedCar!.photoBytes,
+       );
        await _dbHelper.updateCar(selectedCar!);
     }
     await loadData();
@@ -112,7 +121,16 @@ class AppProvider with ChangeNotifier {
   Future<void> addMaintenance(Maintenance m) async {
     int id = await _dbHelper.insertMaintenance(m);
     if (selectedCar != null && m.mileage > selectedCar!.mileage) {
-       selectedCar = Car(id: selectedCar!.id, brand: selectedCar!.brand, model: selectedCar!.model, plate: selectedCar!.plate, year: selectedCar!.year, mileage: m.mileage, photoPath: selectedCar!.photoPath);
+       selectedCar = Car(
+         id: selectedCar!.id,
+         brand: selectedCar!.brand,
+         model: selectedCar!.model,
+         plate: selectedCar!.plate,
+         year: selectedCar!.year,
+         mileage: m.mileage,
+         photoPath: selectedCar!.photoPath,
+         photoBytes: selectedCar!.photoBytes,
+       );
        await _dbHelper.updateCar(selectedCar!);
     }
     await loadData();

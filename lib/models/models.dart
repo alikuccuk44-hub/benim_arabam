@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 class Car {
   final int? id;
   final String brand;
@@ -6,6 +8,7 @@ class Car {
   final int year;
   final int mileage;
   final String? photoPath;
+  final Uint8List? photoBytes;
 
   Car({
     this.id,
@@ -15,6 +18,7 @@ class Car {
     required this.year,
     required this.mileage,
     this.photoPath,
+    this.photoBytes,
   });
 
   Map<String, dynamic> toMap() {
@@ -26,6 +30,7 @@ class Car {
       'year': year,
       'mileage': mileage,
       'photoPath': photoPath,
+      'photoBytes': photoBytes,
     };
   }
 
@@ -38,6 +43,7 @@ class Car {
       year: map['year'],
       mileage: map['mileage'],
       photoPath: map['photoPath'],
+      photoBytes: map['photoBytes'],
     );
   }
 

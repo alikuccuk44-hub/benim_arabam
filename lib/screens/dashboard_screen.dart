@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'dart:io';
+import 'dart:typed_data';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:image_picker/image_picker.dart';
 import '../providers/app_provider.dart';
 import '../models/models.dart';
@@ -16,13 +18,13 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   final ImagePicker _picker = ImagePicker();
 
-  void _showAddCarDialog() {
-    final yearController = TextEditingController();
-    final mileageController = TextEditingController();
-    final plateController = TextEditingController();
+  void _showCarDialog({Car? carToEdit}) {
+    final yearController = TextEditingController(text: carToEdit?.year.toString());
+    final mileageController = TextEditingController(text: carToEdit?.mileage.toString());
+    final plateController = TextEditingController(text: carToEdit?.plate);
     
-    String selectedBrand = '';
-    String selectedModel = '';
+    String selectedBrand = carToEdit?.brand ?? '';
+    String selectedModel = carToEdit?.model ?? '';
 
     showDialog(
       context: context,
@@ -33,11 +35,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
               : [];
 
           return AlertDialog(
-            title: const Text('Yeni Araç Ekle'),
+            title: Text(carToEdit == null ? 'Yeni Araç Ekle' : 'Aracı Düzenle'),
             content: SingleChildScrollView(
               child: Column(
                 children: [
                   Autocomplete<String>(
+                    initialValue: TextEditingValue(text: selectedBrand),
                     optionsBuilder: (TextEditingValue textEditingValue) {
                       if (textEditingValue.text == '') {
                         return CarData.brands.keys.toList();
@@ -53,16 +56,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       });
                     },
                     fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
-                      if (controller.text != selectedBrand && selectedBrand.isEmpty) {
-                         // Initial set if needed
-                      }
-                      controller.addListener(() {
-                        if (selectedBrand != controller.text) {
-                          setState(() {
-                            selectedBrand = controller.text;
-                          });
-                        }
-                      });
                       return TextField(
                         controller: controller,
                         focusNode: focusNode,
@@ -72,6 +65,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                   const SizedBox(height: 8),
                   Autocomplete<String>(
+                    initialValue: TextEditingValue(text: selectedModel),
                     optionsBuilder: (TextEditingValue textEditingValue) {
                       if (textEditingValue.text == '') {
                         return availableModels;
@@ -86,13 +80,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       });
                     },
                     fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
-                      controller.addListener(() {
-                        if (selectedModel != controller.text) {
-                          setState(() {
-                            selectedModel = controller.text;
-                          });
-                        }
-                      });
                       return TextField(
                         controller: controller,
                         focusNode: focusNode,
@@ -111,14 +98,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
               TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('İptal')),
               ElevatedButton(
                 onPressed: () {
-                  final newCar = Car(
+                  final car = Car(
+                    id: carToEdit?.id,
                     brand: selectedBrand.isEmpty ? 'Bilinmiyor' : selectedBrand,
                     model: selectedModel.isEmpty ? 'Bilinmiyor' : selectedModel,
                     plate: plateController.text,
-                    year: int.tryParse(yearController.text) ?? 2000,
-                    mileage: int.tryParse(mileageController.text) ?? 0,
+                    year: int.tryParse(yearController.text) ?? carToEdit?.year ?? 2000,
+                    mileage: int.tryParse(mileageController.text) ?? carToEdit?.mileage ?? 0,
+                    photoPath: carToEdit?.photoPath,
+                    photoBytes: carToEdit?.photoBytes,
                   );
-                  Provider.of<AppProvider>(context, listen: false).addCar(newCar);
+                  if (carToEdit == null) {
+                    Provider.of<AppProvider>(context, listen: false).addCar(car);
+                  } else {
+                    Provider.of<AppProvider>(context, listen: false).updateCar(car);
+                  }
                   Navigator.pop(ctx);
                 },
                 child: const Text('Kaydet'),
@@ -133,8 +127,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Future<void> _pickImage(AppProvider provider) async {
     if (provider.selectedCar == null) return;
     
-    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+    final XFile? image = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
     if (image != null) {
+      final Uint8List bytes = await image.readAsBytes();
       final updatedCar = Car(
         id: provider.selectedCar!.id,
         brand: provider.selectedCar!.brand,
@@ -142,7 +137,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         plate: provider.selectedCar!.plate,
         year: provider.selectedCar!.year,
         mileage: provider.selectedCar!.mileage,
-        photoPath: image.path,
+        photoPath: kIsWeb ? null : image.path,
+        photoBytes: bytes,
       );
       provider.updateCar(updatedCar);
     }
@@ -185,9 +181,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                     IconButton(
                       icon: const Icon(Icons.add_circle, color: Color(0xFF38BDF8)),
-                      onPressed: _showAddCarDialog,
+                      onPressed: () => _showCarDialog(),
                     ),
-                    if (provider.selectedCar != null)
+                    if (provider.selectedCar != null) ...[
+                      IconButton(
+                        icon: const Icon(Icons.edit, color: Colors.orange),
+                        onPressed: () => _showCarDialog(carToEdit: provider.selectedCar),
+                      ),
                       IconButton(
                         icon: const Icon(Icons.delete, color: Colors.redAccent),
                         onPressed: () {
@@ -211,6 +211,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           );
                         },
                       ),
+                    ],
                   ],
                 ),
               ),
@@ -222,7 +223,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   child: ListView(
                     padding: const EdgeInsets.symmetric(horizontal: 16.0),
                     children: [
-                      // Araç Fotoğrafı ve Bilgileri
+                      // Araç Fotoğrafı
                       GestureDetector(
                         onTap: () => _pickImage(provider),
                         child: Container(
@@ -230,20 +231,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(16),
                             color: const Color(0xFF1E293B),
-                            image: provider.selectedCar!.photoPath != null
+                            image: provider.selectedCar!.photoBytes != null
                                 ? DecorationImage(
-                                    image: FileImage(File(provider.selectedCar!.photoPath!)),
+                                    image: MemoryImage(provider.selectedCar!.photoBytes!),
                                     fit: BoxFit.cover,
                                   )
-                                : null,
+                                : (provider.selectedCar!.photoPath != null && !kIsWeb
+                                    ? DecorationImage(
+                                        image: FileImage(File(provider.selectedCar!.photoPath!)),
+                                        fit: BoxFit.cover,
+                                      )
+                                    : null),
                           ),
-                          child: provider.selectedCar!.photoPath == null
+                          child: (provider.selectedCar!.photoBytes == null && provider.selectedCar!.photoPath == null)
                               ? const Center(child: Icon(Icons.camera_alt, size: 50, color: Colors.grey))
                               : null,
                         ),
                       ),
                       const SizedBox(height: 16),
-                                            // Odometer (Kilometre Sayacı)
+                      // Odometer (Kilometre Sayacı)
                       GestureDetector(
                         onTap: () {
                           // Show km history
