@@ -165,8 +165,8 @@ class DatabaseHelper {
           station TEXT,
           cost REAL,
           FOREIGN KEY (carId) REFERENCES cars (id) ON DELETE CASCADE
-        )
       ''');
+    }
     if (oldVersion < 5) {
       await db.execute('ALTER TABLE cars ADD COLUMN photoBytes BLOB');
     }
