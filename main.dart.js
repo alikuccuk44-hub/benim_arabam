@@ -49497,7 +49497,7 @@ break
 case 9:s=11
 return A.l(a.iQ("        CREATE TABLE IF NOT EXISTS insurance(\n          id INTEGER PRIMARY KEY AUTOINCREMENT,\n          carId INTEGER,\n          type TEXT,\n          company TEXT,\n          policyNo TEXT,\n          startDate TEXT,\n          endDate TEXT,\n          premium REAL,\n          notes TEXT,\n          FOREIGN KEY (carId) REFERENCES cars (id) ON DELETE CASCADE\n        )\n      "),$async$mQ)
 case 11:s=12
-return A.l(a.iQ("        CREATE TABLE IF NOT EXISTS inspection(\n          id INTEGER PRIMARY KEY AUTOINCREMENT,\n          carId INTEGER,\n          inspectionDate TEXT,\n          expiryDate TEXT,\n          station TEXT,\n          cost REAL,\n          FOREIGN KEY (carId) REFERENCES cars (id) ON DELETE CASCADE\n      "),$async$mQ)
+return A.l(a.iQ("        CREATE TABLE IF NOT EXISTS inspection(\n          id INTEGER PRIMARY KEY AUTOINCREMENT,\n          carId INTEGER,\n          inspectionDate TEXT,\n          expiryDate TEXT,\n          station TEXT,\n          cost REAL,\n          FOREIGN KEY (carId) REFERENCES cars (id) ON DELETE CASCADE\n        )\n      "),$async$mQ)
 case 12:case 10:s=b<5?13:14
 break
 case 13:s=15
